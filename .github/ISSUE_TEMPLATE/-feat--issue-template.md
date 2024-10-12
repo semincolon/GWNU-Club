@@ -2,7 +2,7 @@
 name: "[FEAT] Issue Template"
 about: A template of issue for the new feature.
 title: "[FEAT] "
-labels: ''
+labels: enhancement
 assignees: ''
 
 ---
