@@ -35,7 +35,7 @@ struct ClubListView: View {
                 
                 Rectangle()
                     .fill(Color.primaryColor)
-                    .frame(width: .infinity, height: 300)
+                    .frame(height: 285)
                 
                 VStack {
                     
