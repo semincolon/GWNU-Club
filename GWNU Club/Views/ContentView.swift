@@ -36,7 +36,7 @@ struct ContentView: View {
                     }
                     
                     Tab("동아리", systemImage: "person.3.fill") {
-                        Text("Club")
+                        ClubListView()
                     }
                     
                     Tab("이벤트", systemImage: "party.popper") {
