@@ -15,14 +15,6 @@ enum ClubType: String, CaseIterable, Identifiable {
     var id: Self { self }
 }
 
-struct Club {
-    var id: Int
-    var name: String
-    var logo: Image?
-    var thumbnail: Image?
-    var hashtags: [String]
-}
-
 struct ClubListView: View {
     
     private var gridItems: [GridItem] = [
@@ -49,18 +41,9 @@ struct ClubListView: View {
     @State private var selectedType: ClubType = ClubType.all
     
     var body: some View {
-        VStack {
-            
-            // 상단 네모 박스
-            ZStack(alignment: .top) {
-                
-                // 배경색
-                Rectangle()
-                    .fill(Color.primaryColor)
-                    .frame(height: 280)
-                
+        NavigationStack {
+            VStack {
                 VStack {
-                    
                     VStack(alignment: .leading) {
                         Text("동아리")
                             .font(.blackHanSans48)
@@ -69,7 +52,7 @@ struct ClubListView: View {
                         
                         SearchBar(searchClub: $searchClub)
                     }
-                     
+                    
                     VStack {
                         // 캠퍼스 선택 Picker
                         Picker("Campus", selection: $selectedCampus) {
@@ -78,8 +61,7 @@ struct ClubListView: View {
                             }
                         }
                         .pickerStyle(.segmented)
-                        .background(RoundedRectangle(cornerRadius: 7)
-                            .foregroundStyle(Color(white: 1, opacity: 0.2)))
+                        .background(RoundedRectangle(cornerRadius: 7).foregroundStyle(Color(white: 1, opacity: 0.2)))
                         .frame(width: 250)
                         
                         // 동아리 분야 선택 Picker
@@ -89,31 +71,35 @@ struct ClubListView: View {
                             }
                         }
                         .pickerStyle(.segmented)
-                        .background(RoundedRectangle(cornerRadius: 7)
-                            .foregroundStyle(Color(white: 1, opacity: 0.2)))
+                        .background(RoundedRectangle(cornerRadius: 7).foregroundStyle(Color(white: 1, opacity: 0.2)))
                     }
                     .padding(.top, 10)
                 }
                 .padding()
                 .safeAreaPadding(.top, 45)
+                .background(Rectangle().fill(Color.primaryColor))
                 
-            }
-            
-            // 동아리 목록
-            ScrollView {
-                LazyVGrid(columns: gridItems) {
-                    ForEach(clubs, id: \.id) { club in
-                        ClubItem(club: club)
+                // 동아리 목록
+                ScrollView {
+                    LazyVGrid(columns: gridItems, spacing: 16) {
+                        ForEach(clubs, id: \.id) { club in
+                            
+                            NavigationLink(destination: ClubDetailView(club: club)) {
+                                ClubItem(club: club)
+                                    
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
                     }
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
             }
-            
+            .ignoresSafeArea(edges: .top)
+            .onTapGesture {
+                hideKeyboard()
+            }
         }
-        .ignoresSafeArea(edges: .top)
-        .onTapGesture {
-            hideKeyboard()
-        }
+        .tint(.white)
     }
 
 }
@@ -218,7 +204,7 @@ struct ClubItem: View {
             .padding(.horizontal, 10)
             .padding(.bottom, 10)
         }
-        .frame(width: 180)
+        
         .border(.gray, width: 2)
     }
 }
