@@ -1,26 +1,11 @@
 import SwiftUI
 
-enum Campus: String, CaseIterable, Identifiable {
-    case gangneung = "강릉캠퍼스"
-    case wonju = "원주캠퍼스"
-    var id: Self { self }
-}
-
-enum ClubType: String, CaseIterable, Identifiable {
-    case all = "전체"
-    case religion = "종교"
-    case exercise = "운동"
-    case show = "공연"
-    case other = "기타"
-    var id: Self { self }
-}
-
 struct ClubListView: View {
     
     private var gridItems: [GridItem] = [
         GridItem(spacing: 16), GridItem()
     ]
-    private var colors: [Color] = [.red, .blue, .green, .yellow]
+    
     private var clubs: [Club] = [
         Club(id: 1, name: "동아리1", hashtags: ["사진", "친목"]),
         Club(id: 2, name: "동아리2", hashtags: ["사진", "친목"]),
@@ -37,7 +22,7 @@ struct ClubListView: View {
     ]
     
     @State private var searchClub: String = ""
-    @State private var selectedCampus: Campus = Campus.gangneung
+    @State private var selectedCampus: Campus = Campus.all
     @State private var selectedType: ClubType = ClubType.all
     
     var body: some View {
@@ -50,7 +35,7 @@ struct ClubListView: View {
                             .foregroundStyle(.white)
                             .shadow(radius: 9, x: 0, y: 5)
                         
-                        SearchBar(searchClub: $searchClub)
+                        SearchBar(hint: "동아리명으로 검색", input: $searchClub)
                     }
                     
                     VStack {
@@ -62,7 +47,7 @@ struct ClubListView: View {
                         }
                         .pickerStyle(.segmented)
                         .background(RoundedRectangle(cornerRadius: 7).foregroundStyle(Color(white: 1, opacity: 0.2)))
-                        .frame(width: 250)
+                        .frame(width: 300)
                         
                         // 동아리 분야 선택 Picker
                         Picker("Type", selection: $selectedType) {
@@ -102,64 +87,6 @@ struct ClubListView: View {
         .tint(.white)
     }
 
-}
-
-struct SearchBar: View {
-    
-    @Binding var searchClub: String
-    @FocusState var isFocused: Bool
-    
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 50)
-                .fill(Color.white)
-                .frame(height: 50)
-            
-            HStack {
-                TextField("동아리명으로 검색", text: $searchClub)
-                    .focused($isFocused)
-                    .keyboardType(.namePhonePad)
-                    .autocorrectionDisabled()
-                    .onSubmit {
-                        isFocused = false
-                        search()
-                    }
-                    .submitLabel(.search)
-                    .toolbar {
-                        ToolbarItemGroup(placement: .keyboard) {
-                            Spacer()
-                            
-                            Button(action: {
-                                isFocused = false
-                            }, label: {
-                                Text("완료")
-                            })
-                        }
-                    }
-                    .padding(.trailing, 3)
-                
-                Image(systemName: "magnifyingglass")
-                    .resizable()
-                    .frame(width: 25, height: 25)
-                    .foregroundStyle(.white)
-                    .fontWeight(.bold)
-                    .background(Circle()
-                        .frame(width: 40, height: 40)
-                        .foregroundStyle(Color.primaryColor))
-                    .onTapGesture {
-                        isFocused = false
-                        search()
-                    }
-            }
-            .padding(.horizontal, 16)
-        }
-        
-    }
-    
-    func search() {
-        searchClub.removeAll()
-        print("SEARCH: \(searchClub)")
-    }
 }
 
 struct ClubItem: View {
