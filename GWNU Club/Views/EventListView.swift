@@ -51,7 +51,10 @@ struct EventListView: View {
                 ScrollView {
                     LazyVGrid(columns: gridItems, spacing: 16) {
                         ForEach(events) { event in
-                            EventItem(event: event)
+                            NavigationLink(destination: EventDetailView(event: event)) {
+                                EventItem(event: event)
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                     .padding(.horizontal)
