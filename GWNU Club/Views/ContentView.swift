@@ -33,7 +33,7 @@ struct ContentView: View {
                     }
                     
                     Tab("이벤트", systemImage: "party.popper") {
-                        Text("Event")
+                        EventListView()
                     }
                     
                     Tab("설정", systemImage: "gearshape") {
