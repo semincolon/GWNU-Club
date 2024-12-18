@@ -6,24 +6,12 @@ struct ClubListView: View {
         GridItem(spacing: 16), GridItem()
     ]
     
-    private var clubs: [Club] = [
-        Club(id: 1, name: "동아리1", hashtags: ["사진", "친목"]),
-        Club(id: 2, name: "동아리2", hashtags: ["사진", "친목"]),
-        Club(id: 3, name: "동아리3", hashtags: ["사진", "친목"]),
-        Club(id: 4, name: "동아리4", hashtags: ["사진", "친목"]),
-        Club(id: 5, name: "동아리5", hashtags: ["사진", "친목"]),
-        Club(id: 6, name: "동아리6", hashtags: ["사진", "친목"]),
-        Club(id: 7, name: "동아리7", hashtags: ["사진", "친목"]),
-        Club(id: 8, name: "동아리8", hashtags: ["사진", "친목"]),
-        Club(id: 9, name: "동아리9", hashtags: ["사진", "친목"]),
-        Club(id: 10, name: "동아리10", hashtags: ["사진", "친목"]),
-        Club(id: 11, name: "동아리12", hashtags: ["사진", "친목"]),
-        Club(id: 12, name: "동아리12", hashtags: ["사진", "친목"])
-    ]
-    
     @State private var searchClub: String = ""
     @State private var selectedCampus: Campus = Campus.all
     @State private var selectedType: ClubType = ClubType.all
+    @State private var clubs: [Club] = []
+    
+    @StateObject private var clubViewModel: ClubViewModel = .init() // 의존성 주입되므로 나중에 수정할 부분
     
     var body: some View {
         NavigationStack {
@@ -41,9 +29,9 @@ struct ClubListView: View {
                     VStack {
                         // 캠퍼스 선택 Picker
                         Picker("Campus", selection: $selectedCampus) {
-                            ForEach(Campus.allCases) {
-                                Text($0.rawValue)
-                            }
+                            Text("전체").tag(Campus.all)
+                            Text("강릉캠퍼스").tag(Campus.gangneung)
+                            Text("원주캠퍼스").tag(Campus.wonju)
                         }
                         .pickerStyle(.segmented)
                         .background(RoundedRectangle(cornerRadius: 7).foregroundStyle(Color(white: 1, opacity: 0.2)))
@@ -65,18 +53,27 @@ struct ClubListView: View {
                 .background(Rectangle().fill(Color.primaryColor))
                 
                 // 동아리 목록
-                ScrollView {
-                    LazyVGrid(columns: gridItems, spacing: 16) {
-                        ForEach(clubs, id: \.id) { club in
-                            
-                            NavigationLink(destination: ClubDetailView(club: club)) {
-                                ClubItem(club: club)
-                                    
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: 16) {
+                            ForEach(clubs, id: \.id) { club in
+                                NavigationLink(destination: ClubDetailView(club: club)) {
+                                    ClubItem(club: club)
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
-                            .buttonStyle(PlainButtonStyle())
                         }
+                        .padding(.horizontal)
+                        .id("TOP")
                     }
-                    .padding(.horizontal)
+                    .onChange(of: selectedCampus) { // 같은 내용의 코드를 하나로 단축시키는 방법이 없을까?
+                        proxy.scrollTo("TOP", anchor: .top)
+                        filterClubs()
+                    }
+                    .onChange(of: selectedType) {
+                        proxy.scrollTo("TOP", anchor: .top)
+                        filterClubs()
+                    }
                 }
             }
             .ignoresSafeArea(edges: .top)
@@ -85,43 +82,65 @@ struct ClubListView: View {
             }
         }
         .tint(.white)
+        .onAppear {
+            Task {
+                try await clubViewModel.fetchClubs()
+                clubs = clubViewModel.clubs
+            }
+        }
     }
-
+        
+    func filterClubs() {
+        var temp = clubs
+        switch selectedCampus {
+        case .gangneung:
+            temp = clubViewModel.clubs.filter { $0.campus == .gangneung }
+        case .wonju:
+            temp = clubViewModel.clubs.filter { $0.campus == .wonju }
+        default:
+            temp = clubViewModel.clubs
+        }
+        
+        switch selectedType {
+        case .religion: clubs = temp.filter { $0.clubType == ClubType.religion.rawValue }
+        case .exercise: clubs = temp.filter { $0.clubType == ClubType.exercise.rawValue }
+        case .show: clubs = temp.filter { $0.clubType == ClubType.show.rawValue }
+        case .study: clubs = temp.filter { $0.clubType == ClubType.study.rawValue }
+        case .hobby: clubs = temp.filter { $0.clubType == ClubType.hobby.rawValue }
+        case .other: clubs = temp.filter { $0.clubType == ClubType.other.rawValue }
+        default: clubs = temp
+        }
+    }
 }
+
 
 struct ClubItem: View {
     var club: Club
     
     var body: some View {
-        VStack(alignment: .leading) {
-            Image(systemName: "matter.logo")
-                .resizable()
-                .frame(height: 120)
-                .scaledToFill()
-                .border(.gray, width: 1)
+        VStack {
+            ThumbnailImage(thumbnailURL: club.imageURL + "/images/1.jpeg")
             
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(spacing: 5) {
                 HStack {
-                    Image(systemName: "apple.logo")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 32, height: 32)
+                    LogoImage(logoURL: club.imageURL + "/logo.jpg")
                     
-                    Text(club.name)
+                    Text(club.clubName)
                         .font(.title3)
                         .fontWeight(.bold)
+                    
+                    Text(club.campus == .gangneung ? "강릉캠퍼스" : "원주캠퍼스")
+                        .font(.footnote)
                 }
                 
                 HStack {
-                    Text("  #\(club.hashtags[0])  ")
-                        .font(.body)
+                    Text(" #\(club.hashtag1) ")
+                        .font(.callout)
                         .fontWeight(.medium)
                         .padding(8)
                         .background(RoundedRectangle(cornerRadius: 20).fill(Color.tagColor))
                     
-                    Spacer()
-                    
-                    Text("  #\(club.hashtags[1])  ")
+                    Text(" #\(club.hashtag2) ")
                         .font(.body)
                         .fontWeight(.medium)
                         .padding(8)
@@ -131,11 +150,27 @@ struct ClubItem: View {
             .padding(.horizontal, 10)
             .padding(.bottom, 10)
         }
-        
         .border(.gray, width: 2)
     }
 }
 
-#Preview {
-    ClubListView()
+struct LogoImage: View {
+    var logoURL: String
+    
+    var body: some View {
+        AsyncImage(url: URL(string: logoURL)) { phase in
+            if let image = phase.image {
+                image
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 32, height: 32)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(Color.gray, lineWidth: 1))
+            }
+        }
+    }
 }
+
+//#Preview {
+//    ClubListView()
+//}
